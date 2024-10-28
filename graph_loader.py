@@ -25,10 +25,10 @@ class Graph:
 
 
 class GraphLoader:
-    def __init__(self):
+    def __init__(self, node_file = None, link_file = None):
         self.graph = Graph()
-        self.node_file = config.paths['node']
-        self.link_file = config.paths['link']
+        self.node_file = config.paths['node'] if not node_file else node_file
+        self.link_file = config.paths['link'] if not link_file else link_file
 
     def construct_graph(self):
         with open(self.node_file) as f:
