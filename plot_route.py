@@ -27,6 +27,7 @@ class RouteProcessor:
             route_panoids = route_data['route_panoids']
             start_heading = route_data['start_heading']
             end_heading = route_data['end_heading']
+            route_id = route_data["route_id"]
             
             # Build list of (lat, lng) pairs for the route
             lat_lng_path = []
@@ -38,6 +39,7 @@ class RouteProcessor:
                     print(f"Warning: Panoid {panoid} not found in graph nodes.")
 
             self.routes.append({
+                "route_id": route_id,
                 "navigation_text": navigation_text,
                 "start_heading": start_heading,
                 "end_heading": end_heading,
@@ -48,7 +50,8 @@ class RouteProcessor:
         return self.routes
 
     def plot_routes(self, routes):
-        for idx, route in enumerate(routes):
+        for route in routes:
+            route_id = route["route_id"]
             # Separate latitudes and longitudes from the lat_lng_path
             latitudes, longitudes = zip(*route["lat_lng_path"])
             
@@ -65,19 +68,19 @@ class RouteProcessor:
             # Plot the route path with scatter points and a line connecting them
             gmap.scatter(latitudes, longitudes, '#FF0000', size=1, marker=False)
             gmap.plot(latitudes, longitudes, 'cornflowerblue', edge_width=5)
-            gmap.marker(latitudes[0], longitudes[0], color='green', label='S')
-            gmap.marker(latitudes[-1], longitudes[-1], color='red', label='G')
+            gmap.marker(latitudes[0], longitudes[0], color='#FFC0CB', label='S')
+            gmap.marker(latitudes[-1], longitudes[-1], color='#90EE90', label='G')
 
             # Plot the selected positions with markers
             for i, position in enumerate(route['multiple_choice_positions']):
                 gmap.marker(position['latitude'], position['longitude'], color='cornflowerblue', label=str(i+1))
             
             # Draw the map to an HTML file with a unique name for each route
-            map_filename = f"maps/{self.partition}_route_{idx+1}.html"
+            map_filename = f"maps/{self.partition}_route_{route_id}.html"
             gmap.draw(map_filename)
-            print(f"Map for route {idx+1} saved as {map_filename}")
+            print(f"Map for route {route_id} saved as {map_filename}")
 
-    def select_positions(self, route, num_positions=5):
+    def select_positions(self, route, num_positions=5, min_distance_m=50):
         """
         Selects an intermediate ground truth position from the route and several other
         random positions, both on and off the route.
@@ -104,32 +107,36 @@ class RouteProcessor:
         
         # Collect random positions on the route (excluding the ground truth position)
         on_path_positions = random.sample(
-            [i for i in range(1,len(lat_lng_path)-1) if i != ground_truth_index], 
-            min(num_positions // 2, len(lat_lng_path) - 2)
+            [i for i in range(1,len(lat_lng_path)-1) if abs(i-ground_truth_index) > 1], 
+            min(num_positions // 2, max(len(lat_lng_path) - 5, 0))
         ) if len(lat_lng_path) > 4 else []
 
-        # Generate a few off-path random coordinates (for simplicity, within nearby range)
-        off_path_positions = []
-        for _ in range(num_positions - len(on_path_positions) - 1):
-            lat_variation = random.choice([random.uniform(0.0001, 0.0005), random.uniform(-0.0005, -0.0001)])
-            lng_variation = random.choice([random.uniform(0.0001, 0.0005), random.uniform(-0.0005, -0.0001)])
-            off_path_positions.append({
-                "panoid": None,
-                "latitude": ground_truth_position["latitude"] + lat_variation,
-                "longitude": ground_truth_position["longitude"] + lng_variation
-            })
-
-        # Combine on-path and off-path positions with the ground truth
         positions = [{"panoid": route_panoids[i], "latitude": lat_lng_path[i][0], "longitude": lat_lng_path[i][1]} for i in on_path_positions]
-        positions.extend(off_path_positions)
+
+        # Generate a few off-path random coordinates (for simplicity, within nearby range)
+        while len(positions)+1 <= num_positions-1:
+            lat_variation = random.choice([random.uniform(0.0002, 0.001), random.uniform(-0.0007, -0.001)])
+            lng_variation = random.choice([random.uniform(0.0002, 0.001), random.uniform(-0.0007, -0.001)])
+            
+            longitude = ground_truth_position["longitude"] + lng_variation
+            latitude = ground_truth_position["latitude"] + lat_variation
+
+            if all(geopy.distance.distance((latitude, longitude), (pt["latitude"], pt["longitude"])).m >= min_distance_m for pt in positions):
+                positions.append({
+                    "panoid": None,
+                    "latitude": latitude,
+                    "longitude": longitude
+                })
+        
+        # Combine on-path and off-path positions with the ground truth
         random.shuffle(positions)
         for pos in positions:
             pos["distance_from_correct"] = geopy.distance.distance((pos["latitude"], 
                                                        pos["longitude"]), 
                                                       (ground_truth_position["latitude"], 
                                                        ground_truth_position["longitude"])).m
-        i = random.randint(0, len(positions) - 1)
-        positions.insert(i, ground_truth_position)  # Insert ground truth as the first element
+        i = random.randint(0, len(positions))
+        positions.insert(i, ground_truth_position)  # Insert ground truth
         ground_truth_position["mc_index"] = i
 
         return positions, ground_truth_position
@@ -164,6 +171,7 @@ class RouteProcessor:
         return updated_routes
     
     def load_positions(self, path):
+        self.partition = path.split('.')[0].split('/')[-1].split('_')[0]
         with open(path, 'r') as f:
             self.positions = json.load(f)
         return self.positions
@@ -171,7 +179,7 @@ class RouteProcessor:
 # Usage
 if __name__ == "__main__":
     # Google Maps API key
-    api_key = "AIzaSyAAmbphdlZi8ygelmXSRWO_jt3Dvcgsis8"
+    api_key = "AIzaSyCtPPB5eORNc6UBg0Kv7-2lW04bfvctnjA"
 
     # Initialize graph loader and construct the graph
     graph_loader = GraphLoader()
@@ -179,11 +187,12 @@ if __name__ == "__main__":
     
     # Process routes from JSON file
     route_processor = RouteProcessor(graph, api_key)
-    routes = route_processor.load_routes('data/test.json')
+    # routes = route_processor.load_routes('data/test.json')
+    # routes = route_processor.save_positions(routes, 'data/test_positions.json')
 
-    routes = route_processor.save_positions(routes, 'data/test_positions.json')
+    routes = route_processor.load_positions('data/test_positions.json')
     
-    plotted_routes = routes[:5]
+    plotted_routes = routes[:]
     route_processor.plot_routes(plotted_routes)
 
     # Print each route's lat/lng path for inspection
