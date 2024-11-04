@@ -7,7 +7,11 @@ from graph_loader import GraphLoader
 # from streetview import get_panorama_async
 # import asyncio
 
-api_key = "AIzaSyAAmbphdlZi8ygelmXSRWO_jt3Dvcgsis8"
+api_key = os.getenv("MAPS_API_KEY")
+if api_key is None:
+    raise ValueError("API key not found. Please set the MY_API_KEY environment variable.")
+else:
+    print("API key loaded successfully.")
 
 def download_street_view_images(graph, route, image_folder):
         """
