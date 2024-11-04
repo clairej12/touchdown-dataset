@@ -3,6 +3,7 @@ from graph_loader import GraphLoader
 import gmplot
 import random
 import geopy.distance
+import os
 
 from pdb import set_trace as dbg
 
@@ -179,7 +180,12 @@ class RouteProcessor:
 # Usage
 if __name__ == "__main__":
     # Google Maps API key
-    api_key = "AIzaSyCtPPB5eORNc6UBg0Kv7-2lW04bfvctnjA"
+    
+    api_key = os.getenv("MAPS_API_KEY")
+    if api_key is None:
+        raise ValueError("API key not found. Please set the MY_API_KEY environment variable.")
+    else:
+        print("API key loaded successfully.")
 
     # Initialize graph loader and construct the graph
     graph_loader = GraphLoader()
