@@ -9,7 +9,7 @@ from graph_loader import GraphLoader
 
 api_key = os.getenv("MAPS_API_KEY")
 if api_key is None:
-    raise ValueError("API key not found. Please set the MY_API_KEY environment variable.")
+    raise ValueError("API key not found. Please set the MAPS_API_KEY environment variable.")
 else:
     print("API key loaded successfully.")
 
