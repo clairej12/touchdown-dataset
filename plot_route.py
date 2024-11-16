@@ -77,7 +77,7 @@ class RouteProcessor:
                 gmap.marker(position['latitude'], position['longitude'], color='cornflowerblue', label=str(i+1))
             
             # Draw the map to an HTML file with a unique name for each route
-            map_filename = f"maps/{self.partition}_route_{route_id}.html"
+            map_filename = f"/data/claireji/maps/{self.partition}_maps/{self.partition}_route_{route_id}.html"
             gmap.draw(map_filename)
             print(f"Map for route {route_id} saved as {map_filename}")
 
@@ -96,6 +96,10 @@ class RouteProcessor:
         """
         lat_lng_path = route["lat_lng_path"]
         route_panoids = route["route_panoids"]
+
+        if len(lat_lng_path) <= 2:
+            print(f"Route {route['route_id']} has <= 2 coordinates.")
+            return None, None
 
         # Select a ground truth position as an intermediate point in the route
         ground_truth_index = random.randint(1, len(lat_lng_path) - 2)
@@ -116,8 +120,8 @@ class RouteProcessor:
 
         # Generate a few off-path random coordinates (for simplicity, within nearby range)
         while len(positions)+1 <= num_positions-1:
-            lat_variation = random.choice([random.uniform(0.0002, 0.001), random.uniform(-0.0007, -0.001)])
-            lng_variation = random.choice([random.uniform(0.0002, 0.001), random.uniform(-0.0007, -0.001)])
+            lat_variation = random.choice([random.uniform(0.0003, 0.001), random.uniform(-0.0004, -0.001)])
+            lng_variation = random.choice([random.uniform(0.0003, 0.001), random.uniform(-0.0004, -0.001)])
             
             longitude = ground_truth_position["longitude"] + lng_variation
             latitude = ground_truth_position["latitude"] + lat_variation
@@ -156,6 +160,9 @@ class RouteProcessor:
         for i, route in enumerate(routes):
             # Select positions and ground truth for the current route
             positions, ground_truth_position = self.select_positions(route)
+            if not positions:
+                print(f"Route {route['route_id']} has no positions chosen.")
+                continue
             
             # Update the current route with selected positions and ground truth
             route["multiple_choice_positions"] = positions
@@ -180,7 +187,7 @@ class RouteProcessor:
 # Usage
 if __name__ == "__main__":
     # Google Maps API key
-    
+    split = "train"
     api_key = os.getenv("MAPS_API_KEY")
     if api_key is None:
         raise ValueError("API key not found. Please set the MAPS_API_KEY environment variable.")
@@ -193,12 +200,12 @@ if __name__ == "__main__":
     
     # Process routes from JSON file
     route_processor = RouteProcessor(graph, api_key)
-    # routes = route_processor.load_routes('data/test.json')
-    # routes = route_processor.save_positions(routes, 'data/test_positions.json')
+    routes = route_processor.load_routes(f'data/{split}.json')
+    routes = route_processor.save_positions(routes, f'data/{split}_positions.json')
 
-    routes = route_processor.load_positions('data/test_positions.json')
+    routes = route_processor.load_positions(f'data/{split}_positions.json')
     
-    plotted_routes = routes[:]
+    plotted_routes = routes
     route_processor.plot_routes(plotted_routes)
 
     # Print each route's lat/lng path for inspection
