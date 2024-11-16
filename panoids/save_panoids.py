@@ -4,6 +4,7 @@ import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from graph_loader import GraphLoader
+import time
 # from streetview import get_panorama_async
 # import asyncio
 
@@ -38,7 +39,7 @@ def download_street_view_images(graph, route, image_folder):
             url = (
                 f"https://maps.googleapis.com/maps/api/streetview?"
                 f"size=800x600&location={node.coordinate[0]},{node.coordinate[1]}"
-                f"&heading={node.pano_yaw_angle}&key={api_key}&fov=120"
+                f"&heading={node.pano_yaw_angle}&key={api_key}&fov=110"
             )
 
             # Request the image from Google Street View API
@@ -51,8 +52,8 @@ def download_street_view_images(graph, route, image_folder):
                         f.write(chunk)
                 print(f"Saved image for panoid {panoid} at {image_path}")
             else:
-                print(f"Failed to retrieve image for panoid {panoid} with status code {response.status_code}")
-
+                print(f"Failed to retrieve image for panoid {panoid} with status code {response.status_code}, {response.reason}")
+            time.sleep(0.1)
 # async def download_street_view_pano(graph, route, image_folder):
 #         """
 #         Downloads Google Street View images from the start of the route up to the ground truth index.
@@ -81,15 +82,19 @@ def download_street_view_images(graph, route, image_folder):
 
 if __name__ == "__main__":
     # Load the graph and routes from JSON files
+    split = "train"
     graph = GraphLoader("../graph/nodes.txt", "../graph/links.txt").construct_graph()
-    with open("../data/test_positions.json", 'r') as f:
+    with open(f"../data/{split}_positions.json", 'r') as f:
         routes = json.load(f)
+        # routes = []
+        # for line in f:
+        #     routes.append(json.loads(line))
     
     # Create a folder to store the downloaded images
-    image_folder = 'test_images'
+    image_folder = f'/data/claireji/panoids/{split}_images/'
     os.makedirs(image_folder, exist_ok=True)
     
     # Download images for each route
-    for idx, route in enumerate(routes[5:]):
+    for idx, route in enumerate(routes):
         download_street_view_images(graph, route, image_folder)
         # asyncio.run(download_street_view_pano(graph, route, image_folder))

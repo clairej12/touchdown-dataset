@@ -22,7 +22,7 @@ def html_to_image(html_file, override = False):
     driver.get(f"file:///{os.path.abspath(html_file)}")
 
     # Wait for the page to load
-    sleep(5)
+    sleep(3)
     # Get the screenshot
     driver.save_screenshot(screenshot_file)
     print("Saved image to ", screenshot_file)
@@ -31,10 +31,10 @@ def html_to_image(html_file, override = False):
     driver.quit()
 
 # Get the current directory
-current_dir = os.getcwd()
+current_dir = '/data/claireji/maps/test_maps/'
 
 # Iterate through HTML files in the directory
 for file in os.listdir(current_dir):
     if file.endswith(".html"):
         html_file_path = os.path.join(current_dir, file)
-        html_to_image(html_file_path)
+        html_to_image(html_file_path, override=False)
