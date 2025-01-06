@@ -16,6 +16,8 @@ def html_to_image(html_file, override = False):
     # Set up Chrome WebDriver
     chrome_options = Options()
     chrome_options.add_argument("--headless")
+    # chrome_options.add_argument("--kiosk")
+    chrome_options.add_argument("--start-maximized")
     driver = webdriver.Chrome(options=chrome_options)
 
     # Load the HTML file
@@ -31,7 +33,8 @@ def html_to_image(html_file, override = False):
     driver.quit()
 
 # Get the current directory
-current_dir = '/data/claireji/maps/test_maps/'
+# current_dir = '/data/claireji/maps/test_maps/'
+current_dir = '/data/claireji/maps/zoomed_maps/'
 
 # Iterate through HTML files in the directory
 for file in os.listdir(current_dir):
