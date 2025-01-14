@@ -17,7 +17,7 @@ def calculate_bearing(lat1, lon1, lat2, lon2):
 # Function to determine movement direction based on bearings
 def get_direction(bearing1, bearing2):
     angle = (bearing2 - bearing1 + 360) % 360
-    if angle < 15 or angle > 345:
+    if angle < 45 or angle > 315:
         return "Forward"
     elif 15 <= angle <= 180:
         return "Right"
@@ -27,7 +27,7 @@ def get_direction(bearing1, bearing2):
 # Function to process a single dictionary
 def process_path(data):
     lat_lng_path = data.get("lat_lng_path", [])
-    route_panoids = data.get("route_panoids", [])
+    route_panoids = data.get("image_list", [])
     
     if len(lat_lng_path) < 2 or len(route_panoids) < 2:
         return []
@@ -40,23 +40,19 @@ def process_path(data):
             bearing1 = calculate_bearing(lat1, lon1, lat2, lon2)
             lat3, lon3 = lat_lng_path[i + 1]
             bearing2 = calculate_bearing(lat2, lon2, lat3, lon3)
-            direction = get_direction(bearing1, bearing2)
-        else:
-            direction = "Forward"  # Assume the first segment moves forward
-            lat1, lon1 = lat_lng_path[i]
-            lat2, lon2 = lat_lng_path[i+1]
-            bearing1 = calculate_bearing(lat1, lon1, lat2, lon2)
-            bearing2 = calculate_bearing(lat1, lon1, lat2, lon2)
-        panoid_start = route_panoids[i]
-        panoid_end = route_panoids[i+1]
+            direction = get_direction(bearing1, bearing2)            
+            panoid_start = route_panoids[i-1]
+            panoid_middle = route_panoids[i]
+            panoid_end = route_panoids[i+1]
 
-        directions.append({
-            "direction": direction,
-            "panoid_start": panoid_start,
-            "panoid_end": panoid_end,
-            "bearing_1": bearing1,
-            "bearing_2": bearing2
-        })
+            directions.append({
+                "direction": direction,
+                "panoid_start": panoid_start,
+                "panoid_middle": panoid_middle,
+                "panoid_end": panoid_end,
+                "bearing_1": bearing1,
+                "bearing_2": bearing2
+            })
 
     return directions
 
@@ -81,8 +77,8 @@ def save_results_to_file(results, output_file):
         json.dump(results, file, indent=4)
 
 # Example usage
-input_file = "../data/test_positions.json"
-output_file = "turns.json"
+input_file = "../data/test_positions_augmented_mapped.json"
+output_file = "turns_augmented_mapped.json"
 
 results = process_json_file(input_file)
 save_results_to_file(results, output_file)
