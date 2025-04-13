@@ -17,44 +17,54 @@ def calculate_bearing(lat1, lon1, lat2, lon2):
 # Function to determine movement direction based on bearings
 def get_direction(bearing1, bearing2):
     angle = (bearing2 - bearing1 + 360) % 360
-    if angle < 45 or angle > 315:
-        return "Forward"
-    elif 15 <= angle <= 180:
-        return "Right"
+    if angle < 80 or angle > 280:
+        return "Forward", angle
+    elif 80 <= angle <= 180:
+        return "Right", angle
     else:
-        return "Left"
+        return "Left", angle
 
 # Function to process a single dictionary
 def process_path(data):
-    lat_lng_path = data.get("lat_lng_path", [])
-    route_panoids = data.get("image_list", [])
+    path = data.get("path", [])
     
-    if len(lat_lng_path) < 2 or len(route_panoids) < 2:
+    if len(path) < 2:
         return []
 
+    for i, entry in enumerate(path):
+        entry["idx"] = i
+
     directions = []
-    for i in range(len(lat_lng_path)-1):
+    turn_list = []
+    for i in range(len(path)-1):
         if i > 0:
-            lat1, lon1 = lat_lng_path[i-1]
-            lat2, lon2 = lat_lng_path[i]
+            lat1, lon1 = path[i-1]["lat"], path[i-1]["lng"]
+            lat2, lon2 = path[i]["lat"], path[i]["lng"]
+            lat3, lon3 = path[i + 1]["lat"], path[i + 1]["lng"]
+
             bearing1 = calculate_bearing(lat1, lon1, lat2, lon2)
-            lat3, lon3 = lat_lng_path[i + 1]
             bearing2 = calculate_bearing(lat2, lon2, lat3, lon3)
-            direction = get_direction(bearing1, bearing2)            
-            panoid_start = route_panoids[i-1]
-            panoid_middle = route_panoids[i]
-            panoid_end = route_panoids[i+1]
+
+            turn, angle = get_direction(bearing1, bearing2) 
+
+            if turn != "Forward":
+                turn_list.append((i, turn))
+
+            panoid_start = path[i-1]
+            panoid_middle = path[i]
+            panoid_end = path[i+1]
 
             directions.append({
-                "direction": direction,
+                "turn": turn,
                 "panoid_start": panoid_start,
                 "panoid_middle": panoid_middle,
                 "panoid_end": panoid_end,
                 "bearing_1": bearing1,
-                "bearing_2": bearing2
+                "bearing_2": bearing2,
+                "angle": angle
             })
 
-    return directions
+    return directions, turn_list
 
 # Function to read and process the JSON file
 def process_json_file(file_path):
@@ -63,10 +73,11 @@ def process_json_file(file_path):
     
     results = []
     for entry in data:
-        directions = process_path(entry)
+        directions, turns = process_path(entry)
         results.append({
             "route_id": entry.get("route_id"),  # Add an identifier if available
-            "directions": directions
+            "turns": turns,
+            "directions": directions,
         })
 
     return results
@@ -77,8 +88,8 @@ def save_results_to_file(results, output_file):
         json.dump(results, file, indent=4)
 
 # Example usage
-input_file = "../data/test_positions_augmented_mapped.json"
-output_file = "turns_augmented_mapped.json"
+input_file = "../data/test_positions_easy_processed_mapped.json"
+output_file = "test_positions_easy_processed_turns.json"
 
 results = process_json_file(input_file)
 save_results_to_file(results, output_file)
