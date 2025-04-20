@@ -34,10 +34,11 @@ def html_to_image(html_file, override = False):
 
 # Get the current directory
 # current_dir = '/data/claireji/maps/test_maps/'
-current_dir = '/data/claireji/maps/zoomed_maps/'
+# current_dir = '/data/claireji/maps/zoomed_maps/'
+current_dir = '/data/claireji/maps/easy_maps/'
 
 # Iterate through HTML files in the directory
 for file in os.listdir(current_dir):
     if file.endswith(".html"):
         html_file_path = os.path.join(current_dir, file)
-        html_to_image(html_file_path, override=False)
+        html_to_image(html_file_path, override=True)

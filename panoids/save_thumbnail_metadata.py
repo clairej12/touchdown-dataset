@@ -7,11 +7,7 @@ import hashlib
 import hmac
 import base64
 import urllib.parse as urlparse
-
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from graph_loader import GraphLoader
-
-OVERRIDE = False
+import pdb
 
 # Load API key
 api_key = os.getenv("MAPS_API_KEY")
@@ -21,11 +17,28 @@ else:
     print("API key loaded successfully.")
 
 # Session key for tile.googleapis requests
-session_key = os.getenv("MAPS_SESSION_KEY")
-if session_key is None:
-    raise ValueError("Session key not found. Please set the MAPS_SESSION_KEY environment variable.")
-else:
-    print("Session key loaded successfully.")
+url = f"https://tile.googleapis.com/v1/createSession?key={api_key}"
+headers = {
+    "Content-Type": "application/json"
+}
+payload = {
+    "mapType": "streetview",
+    "language": "en-US",
+    "region": "US"
+}
+
+try:
+    response = requests.post(url, headers=headers, json=payload)
+    response.raise_for_status()  # Raise an error for bad status codes
+    data = response.json()
+    session_key = data.get("session")
+    if session_key:
+        print(f"Session Key: {session_key}")
+    else:
+        raise ValueError("Failed to retrieve session key.")
+except requests.exceptions.RequestException as e:
+    print(f"An error occurred: {e}")
+    raise ValueError("Session key failed to be retrieved.")
 
 signature = os.getenv("MAPS_URL_SIGNATURE")
 if signature is None:
@@ -96,14 +109,14 @@ def fetch_metadata(lat, lng, metadata_folder, radius = 20):
         print(f"Saved metadata for panoId {pano_id} at {metadata_path}")
         return metadata
     else:
+        pdb.set_trace()
         print(f"Failed to fetch metadata for {lat}, {lng} with status {response.status_code}")
         
-def process_route_metadata(graph, route, metadata_folder, panoid_mapping):
+def process_route_metadata(route, metadata_folder, panoid_mapping):
     """
     Process each route to fetch metadata and download thumbnails.
 
     Parameters:
-    - graph: The graph containing route nodes.
     - route: A route dictionary containing 'lat_lng_path' and 'route_panoids'.
     - metadata_folder: Directory to save metadata files.
     - image_folder: Directory to save thumbnail images.
@@ -111,20 +124,18 @@ def process_route_metadata(graph, route, metadata_folder, panoid_mapping):
     os.makedirs(metadata_folder, exist_ok=True)
 
     for i, panoid in enumerate(route['route_panoids']):
-        node = graph.nodes.get(panoid)
-
-        if not node:
-            print(f"Node with panoid {panoid} not found in graph.")
-            continue
+        lat,lng = route['lat_lng_path'][i]
 
         # Fetch metadata for the node's coordinates
         if panoid not in panoid_mapping:
-            metadata = fetch_metadata(node.coordinate[0], node.coordinate[1], metadata_folder)
+            metadata = fetch_metadata(lat, lng, metadata_folder)
             if metadata and ("panoId" in metadata or "pano_id" in metadata):
                 pano_id = metadata["panoId"] if "panoId" in metadata else metadata["pano_id"]
                 panoid_mapping[panoid] = pano_id
             else:
-                print(f"Metadata not available for node at {node.coordinate}")
+                print(f"Metadata not available for {lat,lng}")
+        else:
+            print(f"Metadata for {panoid} already exists.")
 
         time.sleep(0.1)
     return panoid_mapping
@@ -132,19 +143,20 @@ def process_route_metadata(graph, route, metadata_folder, panoid_mapping):
 if __name__ == "__main__":
     # Load the graph and routes from JSON files
     split = "test"
-    graph = GraphLoader("../graph/aug_nodes.txt", "../graph/aug_links.txt").construct_graph()
-    with open(f"../data/{split}_positions_augmented.json", "r") as f:
+    with open(f"../data/{split}_positions_easy.json", "r") as f:
         routes = json.load(f)
 
     # Create folders for saving metadata and images
     metadata_folder = f"/data/claireji/panoid_metadata/"
 
-    panoid_mapping = {}
+    with open(f"../metadata/{split}_panoid_mapping.json", "r") as f:
+        panoid_mapping = json.load(f)
+
     # Process each route
     for idx, route in enumerate(routes[:60]):
-        mapping = process_route_metadata(graph, route, metadata_folder, panoid_mapping)
+        mapping = process_route_metadata(route, metadata_folder, panoid_mapping)
         panoid_mapping.update(mapping)
     
     # Save the panoid mapping to a JSON file
-    with open(f"../metadata/{split}_panoid_mapping.json", "w") as f:
+    with open(f"../metadata/{split}_easy_panoid_mapping.json", "w") as f:
         json.dump(panoid_mapping, f, indent=2)

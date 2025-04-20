@@ -128,6 +128,6 @@ if __name__ == "__main__":
     
     # Process routes from JSON file
 
-    plotted_routes = load_positions(f'../data/{split}_positions.json')
+    plotted_routes = load_positions(f'../data/test_positions_easy_processed_mapped_answered.json')
     
     plot_routes(plotted_routes[:60], api_key)

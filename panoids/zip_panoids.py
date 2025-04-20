@@ -18,7 +18,7 @@ def zip_thumbnails(json_file, thumbnails_folder, output_zip, cutoff=None):
 
         for position in route_positions:
             # Construct the jpg file path
-            jpg_file = os.path.join(thumbnails_folder, f"{position['pano_id']}_{position['heading']}.jpg")
+            jpg_file = os.path.join(thumbnails_folder, f"{position['pano_id']}_{position['pano_heading']}.jpg")
 
             # Check if the file exists before adding
             if os.path.exists(jpg_file):
@@ -32,7 +32,7 @@ def zip_thumbnails(json_file, thumbnails_folder, output_zip, cutoff=None):
     print(f"Zipped {len(files_to_zip)} files into {output_zip}")
 
 # Specify file paths
-json_file = '../data/test_positions_easy_processed_mapped.json'  # Replace with your JSON file path
+json_file = '../data/test_positions_easy_processed_mapped_v2.json'  # Replace with your JSON file path
 thumbnails_folder = '/data/claireji/thumbnails/'  # Replace with your thumbnails folder path
 output_zip = 'thumbnails.zip'  # Replace with your desired output zip file path
 
