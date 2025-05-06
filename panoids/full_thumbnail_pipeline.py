@@ -12,7 +12,7 @@ import math
 # Configuration
 OVERRIDE = True
 OVERRIDE_METADATA = False
-OVERRIDE_IMAGES = True
+OVERRIDE_IMAGES = False
 API_KEY = os.getenv("MAPS_API_KEY")
 SIGNATURE = os.getenv("MAPS_URL_SIGNATURE")
 IMAGE_FOLDER = "/data/claireji/thumbnails/"
@@ -356,13 +356,16 @@ def process_positions_images(input_json):
     with open(input_json, "r") as f:
         data = json.load(f)
 
-    for route in data[:100]:
+    for route in data:
         process_route_images(route)
 
 # Main execution
 if __name__ == "__main__":
-    INPUT_JSON = "../data/test_positions_easy_processed.json"
-    OUTPUT_JSON = "../data/test_positions_easy_processed_mapped_v2.json"
+    # INPUT_JSON = "../data/test_positions_easy_processed.json"
+    # OUTPUT_JSON = "../data/test_positions_easy_processed_mapped_v2.json"
 
-    process_positions(INPUT_JSON, OUTPUT_JSON, cutoff=65)
+    INPUT_JSON = "../data/train_positions_processed_v2.json"
+    OUTPUT_JSON = "../data/train_positions_processed_mapped_v2.json"
+
+    process_positions(INPUT_JSON, OUTPUT_JSON, cutoff=300)
     process_positions_images(OUTPUT_JSON)

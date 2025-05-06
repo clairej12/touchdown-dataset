@@ -95,8 +95,11 @@ def save_results_to_file(results, modified_data, input_file, output_file):
         json.dump(results, file, indent=4)
 
 # Example usage
-input_file = "../data/test_positions_easy_processed_mapped_v2.json"
-output_file = "test_positions_easy_processed_turns_v2.json"
+# input_file = "../data/test_positions_easy_processed_mapped_v2.json"
+# output_file = "test_positions_easy_processed_turns_v2.json"
+
+input_file = "../data/train_positions_processed_mapped_v2.json"
+output_file = "train_positions_processed_turns_v2.json"
 
 results, modified_data = process_json_file(input_file)
 save_results_to_file(results, modified_data, input_file, output_file)

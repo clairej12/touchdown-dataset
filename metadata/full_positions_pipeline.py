@@ -153,8 +153,12 @@ def process_positions(input_file, output_file):
         json.dump(positions_data, f, indent=4)
 
 if __name__ == "__main__":
-    input_file = "../data/test_positions_easy.json"
-    output_file = "../data/test_positions_easy_processed.json"
+    # input_file = "../data/test_positions_easy.json"
+    # output_file = "../data/test_positions_easy_processed.json"
+
+    input_file = "../data/train_positions.json"
+    output_file = "../data/train_positions_processed_v2.json"
+
     process_positions(input_file, output_file)
 
 # # Note: to get the turns, run compute_turns.py

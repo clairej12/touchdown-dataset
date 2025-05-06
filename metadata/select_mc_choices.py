@@ -108,6 +108,8 @@ def process_routes(input_filename, output_filename):
     print(f"Processed {len(processed_routes)} routes. Output written to {output_filename}")
 
 if __name__ == "__main__":
-    input_file = "../data/test_positions_easy_processed_mapped_v2.json"
-    output_file = "../data/test_positions_easy_processed_mapped_answered_v2.json"
+    # input_file = "../data/test_positions_easy_processed_mapped_v2.json"
+    # output_file = "../data/test_positions_easy_processed_mapped_answered_v2.json"
+    input_file = "../data/train_positions_processed_mapped_v2.json"
+    output_file = "../data/train_positions_processed_mapped_answered_v2.json"
     process_routes(input_file, output_file)

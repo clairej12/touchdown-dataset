@@ -69,7 +69,9 @@ def process_json(input_path: str, output_path: str) -> None:
 if __name__ == "__main__":
     import argparse
     p = argparse.ArgumentParser(description="Add path and along-path distances to JSON routes")
-    p.add_argument("--input_json", default="test_positions_easy_processed_mapped_answered_v2.json", help="Input JSON file")
-    p.add_argument("--output_json", default="test_positions_easy_processed_mapped_answered_redistanced_v2.json", help="Output JSON file")
+    # p.add_argument("--input_json", default="test_positions_easy_processed_mapped_answered_v2.json", help="Input JSON file")
+    # p.add_argument("--output_json", default="test_positions_easy_processed_mapped_answered_redistanced_v2.json", help="Output JSON file")
+    p.add_argument("--input_json", default="../data/train_positions_processed_mapped_v2.json", help="Input JSON file")
+    p.add_argument("--output_json", default="../data/train_positions_processed_mapped_redistanced_v2.json", help="Output JSON file")
     args = p.parse_args()
     process_json(args.input_json, args.output_json)
