@@ -11,7 +11,9 @@ import re
 # MAP_DIR, PREFIX = '/data/claireji/maps/test_maps/', 'test_maps'
 # MAP_DIR, PREFIX = '/data/claireji/maps/zoomed_maps/', 'test_zoomed_maps'
 # MAP_DIR, PREFIX = '/data/claireji/maps/easy_processed_maps/', 'test_easy_processed_maps'
-MAP_DIR, PREFIX = '/data/claireji/maps/easy_processed_maps_v2/', 'test_easy_processed_maps'
+# MAP_DIR, PREFIX = '/data/claireji/maps/easy_processed_maps_v2/', 'test_easy_processed_maps'
+MAP_DIR, PREFIX = '/data/claireji/maps/easy_processed_maps_v2/', 'train_processed_maps_no_pins'
+
 
 # Function to modify marker icons and markers
 def update_html_markers(file_path, output_path):
@@ -83,7 +85,7 @@ class CustomGoogleMapPlotter(GoogleMapPlotter):
             '\t\tmap.fitBounds(bounds);\n')
         f.write('\n')
 
-def plot_route(route, api_key, override=False):
+def plot_route(route, api_key, override=False, plot_markers=True, map_type='hybrid'):
     route_id = route["route_id"]
     map_filename = f"{MAP_DIR}/{PREFIX}_{route_id}.html"
     if os.path.exists(map_filename) and not override:
@@ -99,7 +101,7 @@ def plot_route(route, api_key, override=False):
     # Initialize the map centered on the route's starting location
     gmap = CustomGoogleMapPlotter(
         sum(latitudes)/len(latitudes), sum(longitudes)/len(longitudes), zoom=20, apikey=api_key, 
-        map_type = 'hybrid', bounds = [(south_bound, west_bound), (north_bound, east_bound)]
+        map_type = map_type, bounds = [(south_bound, west_bound), (north_bound, east_bound)]
     )
     
     # Plot the route path with scatter points and a line connecting them
@@ -109,8 +111,9 @@ def plot_route(route, api_key, override=False):
     gmap.marker(latitudes[-1], longitudes[-1], color='#90EE90', label='G')
 
     # Plot the selected positions with markers
-    for i, position in enumerate(route['multiple_choice_positions']):
-        gmap.marker(position['lat'], position['lng'], color='cornflowerblue', label=str(i+1))
+    if plot_markers:
+        for i, position in enumerate(route['multiple_choice_positions']):
+            gmap.marker(position['lat'], position['lng'], color='cornflowerblue', label=str(i+1))
     
     # Draw the map to an HTML file with a unique name for each route
     gmap.draw(map_filename)
@@ -159,7 +162,7 @@ def load_positions(path):
 # Usage
 if __name__ == "__main__":
     # Google Maps API key
-    data_file = '../data/test_positions_easy_processed_mapped_answered_v2.json'
+    data_file = '../data/train_positions_processed_mapped_v2.json'
     api_key = os.getenv("MAPS_API_KEY")
     if api_key is None:
         raise ValueError("API key not found. Please set the MAPS_API_KEY environment variable.")
@@ -169,7 +172,7 @@ if __name__ == "__main__":
     os.makedirs(MAP_DIR, exist_ok=True)
     # Process routes from JSON file
     routes = load_positions(data_file)
-    for route in routes[:200]:
-        html_file_path = plot_route(route, api_key, override=True)
-        html_to_image(html_file_path, override=True)
+    for route in routes:
+        html_file_path = plot_route(route, api_key, override=False, plot_markers=False, map_type='satellite')
+        html_to_image(html_file_path, override=False)
     

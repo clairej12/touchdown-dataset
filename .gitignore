@@ -4,3 +4,5 @@ __pycache__/
 *.png
 *.html
 *.gif
+
+git-filter-repo
